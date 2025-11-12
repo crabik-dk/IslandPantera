@@ -1,12 +1,24 @@
 package com.javarush.island.kostromin.entity.organisms.animal.herbivore;
 
-public class Mouse extends Herbivore{
-    public Mouse(String name, double weight, int maxPerCell, int speed, double foodNeeded) {
-        super("Mouse", 0.05, 500, 1, 0.01);
+import com.javarush.island.kostromin.entity.map.Location;
+
+public class Mouse extends Herbivore {
+    public Mouse() {
+        super(0.05, 0.05, 500, 1);
     }
 
     @Override
-    public String toString() {
-        return "🐁";
+    public String getEmoji() { return "🐁"; }
+
+    @Override
+    public void move() {
+        if (currentLocation == null) return;
+
+        Location newLocation = currentLocation.getRandomNeighbor();
+        if (newLocation != null && newLocation.canAddOrganism(this)) {
+            currentLocation.removeOrganism(this);
+            newLocation.addOrganism(this);
+            currentLocation = newLocation;
+        }
     }
 }
