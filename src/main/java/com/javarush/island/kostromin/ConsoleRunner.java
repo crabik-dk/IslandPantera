@@ -8,7 +8,7 @@ public class ConsoleRunner {
         System.out.println("🚀 Starting Island Simulation...");
 
         SimulationConfig config = new SimulationConfig();
-        Island island = new Island(SimulationConfig.WIDTH, SimulationConfig.HEIGHT, config);
+        Island island = new Island(config);
         island.initialize();
         island.startSimulation();
     }

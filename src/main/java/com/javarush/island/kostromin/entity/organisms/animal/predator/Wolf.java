@@ -1,19 +1,24 @@
 package com.javarush.island.kostromin.entity.organisms.animal.predator;
 
 import com.javarush.island.kostromin.entity.map.Location;
+import com.javarush.island.kostromin.entity.organisms.Organism;
+
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Wolf extends Predator {
     public Wolf() {
-        super(50, 50, 30, 3);
+        super(50, 50, 30, 8, 3);
     }
 
     @Override
-    public String getEmoji() { return "🐺"; }
+    public String getEmoji() {
+        return "🐺";
+    }
 
     @Override
     public void move() {
-        if (currentLocation == null) return;
+        if (!isAlive || currentLocation == null) return;
 
         int moves = ThreadLocalRandom.current().nextInt(maxSpeed) + 1;
 
@@ -24,6 +29,30 @@ public class Wolf extends Predator {
                 newLocation.addOrganism(this);
                 currentLocation = newLocation;
             }
+        }
+    }
+
+    @Override
+    public void eat() {
+        if (!isAlive || currentLocation == null) return;
+
+        List<Organism> potentialFood = currentLocation.getOrganisms().stream()
+                .filter(org -> org != this && canEat(org) && org.isAlive())
+                .toList();
+
+        boolean hasEaten = false;
+        for (Organism food : potentialFood) {
+            double probability = getEatingProbability(food.getClass());
+
+            if (ThreadLocalRandom.current().nextDouble() < probability) {
+                currentLocation.removeOrganism(food);
+                weight = Math.min(maxWeight, weight + food.getWeight());
+                hasEaten = true;
+                break;
+            }
+        }
+        if (!hasEaten) {
+            loseWeight();
         }
     }
 }

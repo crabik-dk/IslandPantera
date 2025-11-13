@@ -7,5 +7,7 @@ public class Grass extends Plant {
     }
 
     @Override
-    public String getEmoji() { return "🌿"; }
+    public String getEmoji() {
+        return "🌿";
+    }
 }

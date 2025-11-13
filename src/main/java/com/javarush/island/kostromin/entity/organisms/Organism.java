@@ -4,6 +4,8 @@ public abstract class Organism {
     protected double weight;
     protected final double maxWeight;
     protected final int maxPerLocation;
+    protected boolean isAlive = true;
+
 
     public Organism(double weight, double maxWeight, int maxPerLocation) {
         this.weight = weight;
@@ -19,9 +21,13 @@ public abstract class Organism {
         return maxPerLocation;
     }
 
+    public boolean isAlive() {
+        return isAlive;
+    }
+
     public abstract String getEmoji();
 
-    public boolean isAlive() {
-        return true;
+    public void die() {
+        isAlive = false;
     }
 }

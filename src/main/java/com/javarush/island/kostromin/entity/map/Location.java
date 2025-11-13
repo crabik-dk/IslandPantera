@@ -1,7 +1,6 @@
 package com.javarush.island.kostromin.entity.map;
 
 import com.javarush.island.kostromin.entity.organisms.Organism;
-import com.javarush.island.kostromin.entity.organisms.animal.Animal;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,14 +22,8 @@ public class Location {
         this.organisms = new ArrayList<>();
         this.lock = new ReentrantLock();
     }
-    public void lock() {
-        lock.lock();
-    }
-    public void unlock() {
-        lock.unlock();
-    }
     public boolean addOrganism(Organism organism) {
-        lock();
+        lock.lock();
         try {
             long count = organisms.stream()
                     .filter(org -> org.getClass() == organism.getClass())
@@ -38,45 +31,44 @@ public class Location {
 
             if (count < organism.getMaxPerLocation()) {
                 organisms.add(organism);
-                if (organism instanceof Animal animal) {
-                    animal.setLocation(this);
-                }
                 return true;
             }
             return false;
         } finally {
-            unlock();
+            lock.unlock();
         }
     }
 
     public void removeOrganism(Organism organism) {
-        lock();
+        lock.lock();
         try {
             organisms.remove(organism);
         } finally {
-            unlock();
+            lock.unlock();
         }
     }
 
     public List<Organism> getOrganisms() {
-        lock();
+        lock.lock();
         try {
             return new ArrayList<>(organisms);
         } finally {
-            unlock();
+            lock.unlock();
         }
     }
+
     public boolean canAddOrganism(Organism organism) {
-        lock();
+        lock.lock();
         try {
             long count = organisms.stream()
                     .filter(org -> org.getClass() == organism.getClass())
                     .count();
             return count < organism.getMaxPerLocation();
         } finally {
-            unlock();
+            lock.unlock();
         }
     }
+
     public Location getRandomNeighbor() {
         Random random = ThreadLocalRandom.current();
         int[][] directions = {{-1,0}, {1,0}, {0,-1}, {0,1}};
@@ -89,18 +81,21 @@ public class Location {
     }
 
     public Organism getHeaviestOrganism() {
-        lock();
+        lock.lock();
         try {
             return organisms.stream()
+                    .filter(Organism::isAlive)
                     .max(Comparator.comparingDouble(Organism::getWeight))
                     .orElse(null);
         } finally {
-            unlock();
+            lock.unlock();
         }
     }
+
     public int getX() {
         return x;
     }
+
     public int getY() {
         return y;
     }

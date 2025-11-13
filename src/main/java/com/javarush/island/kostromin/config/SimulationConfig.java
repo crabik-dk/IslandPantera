@@ -13,11 +13,17 @@ import com.javarush.island.kostromin.entity.organisms.plant.Plant;
 
 import java.util.Map;
 
+/**
+ * This is where the initial values for the organisms on the island are set.
+ * The size of the island, the time of one tick, and the maximum number of ticks.
+ * */
+
 public class SimulationConfig {
-    public final int TICK_DURATION_MS = 1000;
+    public final int TICK_DURATION_MS = 500;
     public final int MAX_TICKS = 1000;
-    public final static int WIDTH = 20;
-    public final static int HEIGHT = 20;
+    public final static int WIDTH = 15;
+    public final static int HEIGHT = 15;
+
 
     public final Map<Class<? extends Animal>, Integer> INITIAL_ANIMAL_COUNTS = Map.of(
             Wolf.class, 10,
@@ -26,7 +32,6 @@ public class SimulationConfig {
             Duck.class, 30,
             Caterpillar.class, 100
     );
-
     public final Map<Class<? extends Plant>, Integer> INITIAL_PLANT_COUNTS = Map.of(
             Grass.class, 200,
             Mushroom.class, 100

@@ -4,7 +4,7 @@ import com.javarush.island.kostromin.entity.organisms.animal.Animal;
 
 
 public abstract class Herbivore extends Animal {
-    public Herbivore(double weight, double maxWeight, int maxPerLocation, int maxSpeed) {
-        super(weight, maxWeight, maxPerLocation, maxSpeed);
+    public Herbivore(double weight, double maxWeight, int maxPerLocation, double foodNeeded, int maxSpeed) {
+        super(weight, maxWeight, maxPerLocation, foodNeeded, maxSpeed);
     }
 }

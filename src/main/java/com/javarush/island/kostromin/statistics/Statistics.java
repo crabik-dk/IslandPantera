@@ -11,9 +11,7 @@ import com.javarush.island.kostromin.entity.organisms.animal.predator.Wolf;
 import com.javarush.island.kostromin.entity.organisms.plant.Grass;
 import com.javarush.island.kostromin.entity.organisms.plant.Mushroom;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Statistics {
@@ -24,7 +22,6 @@ public class Statistics {
     }
 
     public void printStatistics(int tick) {
-        System.out.println("\n=== Tick " + tick + " ===");
         printIslandMap();
         printDetailedStatistics();
     }
@@ -35,8 +32,9 @@ public class Statistics {
         int height = island.getHeight();
 
         System.out.println("Island Map (showing heaviest organism in each cell):");
-        System.out.println("Legend: 🐺=Wolf 🐍=Boa 🐁=Mouse 🦆=Duck 🐛=Caterpillar 🌿=Grass 🍄=Mushroom 🔳=empty");
-        String emptyEmoji = "🔳";
+        System.out.println("Legend: 🐺=Wolf 🐍=Boa 🐁=Mouse 🦆=Duck 🐛=Caterpillar 🌿=Grass 🍄=Mushroom ⚪=Empty");
+
+        String emptyEmoji = "⚪";
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -44,9 +42,9 @@ public class Statistics {
                 Organism heaviest = location.getHeaviestOrganism();
 
                 if (heaviest != null) {
-                    System.out.print("|" + heaviest.getEmoji() );
+                    System.out.print("|" + heaviest.getEmoji());
                 } else {
-                    System.out.print("|" + emptyEmoji );
+                    System.out.print("|" + emptyEmoji);
                 }
             }
             System.out.println("|");
@@ -65,14 +63,16 @@ public class Statistics {
                 List<Organism> organisms = location.getOrganisms();
 
                 for (Organism org : organisms) {
-                    Class<? extends Organism> orgClass = org.getClass();
-                    counts.get(orgClass).incrementAndGet();
-                    totalWeights.put(orgClass, totalWeights.get(orgClass) + org.getWeight());
+                    if (org.isAlive()) {
+                        Class<? extends Organism> orgClass = org.getClass();
+                        counts.get(orgClass).incrementAndGet();
+                        totalWeights.put(orgClass, totalWeights.get(orgClass) + org.getWeight());
+                    }
                 }
             }
         }
 
-        System.out.println("\nDetailed Statistics:");
+        System.out.println("\n📊 Detailed Statistics:");
         System.out.println("====================");
 
         counts.entrySet().stream()
