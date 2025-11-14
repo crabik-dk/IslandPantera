@@ -19,7 +19,7 @@ import java.util.Map;
  * */
 
 public class SimulationConfig {
-    public final int TICK_DURATION_MS = 500;
+    public final int TICK_DURATION_MS = 50;
     public final int MAX_TICKS = 1000;
     public final static int WIDTH = 15;
     public final static int HEIGHT = 15;

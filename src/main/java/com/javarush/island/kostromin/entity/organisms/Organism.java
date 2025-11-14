@@ -13,6 +13,8 @@ public abstract class Organism {
         this.maxPerLocation = maxPerLocation;
     }
 
+    public abstract Organism createOffspring();
+
     public double getWeight() {
         return weight;
     }
@@ -26,6 +28,12 @@ public abstract class Organism {
     }
 
     public abstract String getEmoji();
+
+    protected void checkWeight() {
+        if (isAlive && weight < maxWeight * 0.15) {
+            die();
+        }
+    }
 
     public void die() {
         isAlive = false;

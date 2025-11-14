@@ -30,17 +30,13 @@ public class Statistics {
         Location[][] locations = island.getLocations();
         int width = island.getWidth();
         int height = island.getHeight();
-
         System.out.println("Island Map (showing heaviest organism in each cell):");
         System.out.println("Legend: 🐺=Wolf 🐍=Boa 🐁=Mouse 🦆=Duck 🐛=Caterpillar 🌿=Grass 🍄=Mushroom ⚪=Empty");
-
         String emptyEmoji = "⚪";
-
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 Location location = locations[x][y];
                 Organism heaviest = location.getHeaviestOrganism();
-
                 if (heaviest != null) {
                     System.out.print("|" + heaviest.getEmoji());
                 } else {
@@ -54,14 +50,11 @@ public class Statistics {
     private void printDetailedStatistics() {
         Map<Class<? extends Organism>, AtomicInteger> counts = new HashMap<>();
         Map<Class<? extends Organism>, Double> totalWeights = new HashMap<>();
-
         initializeStatMaps(counts, totalWeights);
-
         for (int x = 0; x < island.getWidth(); x++) {
             for (int y = 0; y < island.getHeight(); y++) {
                 Location location = island.getLocation(x, y);
                 List<Organism> organisms = location.getOrganisms();
-
                 for (Organism org : organisms) {
                     if (org.isAlive()) {
                         Class<? extends Organism> orgClass = org.getClass();
@@ -74,7 +67,6 @@ public class Statistics {
 
         System.out.println("\n📊 Detailed Statistics:");
         System.out.println("====================");
-
         counts.entrySet().stream()
                 .filter(entry -> entry.getValue().get() > 0)
                 .sorted((a, b) -> Integer.compare(b.getValue().get(), a.getValue().get()))
@@ -85,21 +77,17 @@ public class Statistics {
                     double avgWeight = totalWeight / count;
                     String emoji = getEmojiForClass(orgClass);
                     String name = orgClass.getSimpleName();
-
                     System.out.printf("%s %s: Count=%d, Avg Weight=%.3f, Total Weight=%.3f%n",
                             emoji, name, count, avgWeight, totalWeight);
                 });
     }
-
     private void initializeStatMaps(
             Map<Class<? extends Organism>, AtomicInteger> counts,
             Map<Class<? extends Organism>, Double> totalWeights) {
-
         Class<?>[] organismClasses = {
                 Wolf.class, Boa.class, Mouse.class, Duck.class, Caterpillar.class,
                 Grass.class, Mushroom.class
         };
-
         for (Class<?> orgClass : organismClasses) {
             @SuppressWarnings("unchecked")
             Class<? extends Organism> typedClass = (Class<? extends Organism>) orgClass;

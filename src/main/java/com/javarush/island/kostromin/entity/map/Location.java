@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class Location {
     private final int x, y;
@@ -25,10 +26,10 @@ public class Location {
     public boolean addOrganism(Organism organism) {
         lock.lock();
         try {
+            organisms.removeIf(org -> !org.isAlive());
             long count = organisms.stream()
                     .filter(org -> org.getClass() == organism.getClass())
                     .count();
-
             if (count < organism.getMaxPerLocation()) {
                 organisms.add(organism);
                 return true;
@@ -51,7 +52,11 @@ public class Location {
     public List<Organism> getOrganisms() {
         lock.lock();
         try {
-            return new ArrayList<>(organisms);
+            List<Organism> aliveOrganisms = organisms.stream()
+                    .filter(Organism::isAlive)
+                    .collect(Collectors.toList());
+            organisms.removeIf(org -> !org.isAlive());
+            return aliveOrganisms;
         } finally {
             lock.unlock();
         }
@@ -60,6 +65,7 @@ public class Location {
     public boolean canAddOrganism(Organism organism) {
         lock.lock();
         try {
+            organisms.removeIf(org -> !org.isAlive());
             long count = organisms.stream()
                     .filter(org -> org.getClass() == organism.getClass())
                     .count();
@@ -73,16 +79,15 @@ public class Location {
         Random random = ThreadLocalRandom.current();
         int[][] directions = {{-1,0}, {1,0}, {0,-1}, {0,1}};
         int[] dir = directions[random.nextInt(directions.length)];
-
         int newX = x + dir[0];
         int newY = y + dir[1];
-
         return island.getLocation(newX, newY);
     }
 
     public Organism getHeaviestOrganism() {
         lock.lock();
         try {
+            organisms.removeIf(org -> !org.isAlive());
             return organisms.stream()
                     .filter(Organism::isAlive)
                     .max(Comparator.comparingDouble(Organism::getWeight))

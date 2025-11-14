@@ -3,11 +3,12 @@ package com.javarush.island.kostromin.entity.map;
 import com.javarush.island.kostromin.config.SimulationConfig;
 import com.javarush.island.kostromin.entity.organisms.Organism;
 import com.javarush.island.kostromin.entity.organisms.animal.Animal;
+import com.javarush.island.kostromin.entity.organisms.plant.Grass;
+import com.javarush.island.kostromin.entity.organisms.plant.Mushroom;
 import com.javarush.island.kostromin.entity.organisms.plant.Plant;
 import com.javarush.island.kostromin.statistics.Statistics;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +19,7 @@ public class Island {
     private final ScheduledExecutorService scheduler;
     private final Statistics statistics;
     private volatile boolean running = false;
-    private AtomicInteger currentTick = new AtomicInteger(0);
+    private final AtomicInteger currentTick = new AtomicInteger(0);
 
     public Island(SimulationConfig config) {
         this.width = SimulationConfig.WIDTH;
@@ -27,7 +28,6 @@ public class Island {
         this.locations = new Location[width][height];
         this.scheduler = Executors.newScheduledThreadPool(4);
         this.statistics = new Statistics(this);
-
         initializeLocations();
     }
 
@@ -41,7 +41,6 @@ public class Island {
 
     public void initialize() {
         System.out.println("🏝️ Initializing island with animals and plants...");
-
         config.INITIAL_ANIMAL_COUNTS.forEach((animalClass, count) -> {
             for (int i = 0; i < count; i++) {
                 try {
@@ -63,7 +62,6 @@ public class Island {
                 }
             }
         });
-
         System.out.println("✅ Island initialization completed");
     }
 
@@ -74,7 +72,6 @@ public class Island {
             int x = random.nextInt(width);
             int y = random.nextInt(height);
             Location location = locations[x][y];
-
             if (location.addOrganism(organism)) {
                 if (organism instanceof Animal animal) {
                     animal.setLocation(location);
@@ -88,23 +85,21 @@ public class Island {
     public void startSimulation() {
         running = true;
         System.out.println("▶️ Starting island simulation...");
-
         scheduler.scheduleAtFixedRate(this::processTick, 0, config.TICK_DURATION_MS, TimeUnit.MILLISECONDS);
 //        scheduler.scheduleWithFixedDelay(this::processTick,0,config.TICK_DURATION_MS,TimeUnit.MILLISECONDS);
     }
-
     private void processTick() {
         if (!running) return;
-
         int tick = currentTick.incrementAndGet();
         System.out.println("\n=== Tick " + tick + " ===");
-
         try {
             moveAllAnimals();
             feedAllAnimals();
+            reproduceAllAnimals();
+            growAllPlants();
+            randomPlantGrowth();
             printStatistics();
             checkStopCondition();
-
         } catch (Exception e) {
             System.err.println("❌ Error in tick " + tick + ": " + e.getMessage());
         }
@@ -118,7 +113,6 @@ public class Island {
                         .filter(org -> org instanceof Animal && org.isAlive())
                         .map(org -> (Animal) org)
                         .toList();
-
                 for (Animal animal : animals) {
                     try {
                         animal.move();
@@ -144,6 +138,67 @@ public class Island {
                         animal.eat();
                     } catch (Exception e) {
                         System.err.println("❌ Error feeding animal: " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    private void reproduceAllAnimals() {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                Location location = locations[x][y];
+                List<Animal> animals = location.getOrganisms().stream()
+                        .filter(org -> org instanceof Animal && org.isAlive())
+                        .map(org -> (Animal) org)
+                        .toList();
+                Map<Class<? extends Animal>, List<Animal>> animalsByType = new HashMap<>();
+                for (Animal animal : animals) {
+                    animalsByType.computeIfAbsent(animal.getClass(), k -> new ArrayList<>()).add(animal);
+                }
+                for (List<Animal> animalGroup : animalsByType.values()) {
+                    if (animalGroup.size() >= 2) {
+                        Animal representative = animalGroup.get(ThreadLocalRandom.current().nextInt(animalGroup.size()));
+                        try {
+                            representative.reproduce();
+                        } catch (Exception e) {
+                            System.err.println("❌ Error reproducing animals: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void growAllPlants() {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                Location location = locations[x][y];
+                List<Plant> plants = location.getOrganisms().stream()
+                        .filter(org -> org instanceof Plant && org.isAlive())
+                        .map(org -> (Plant) org)
+                        .toList();
+                for (Plant plant : plants) {
+                    try {
+                        plant.grow();
+                        plant.reproduce();
+                    } catch (Exception e) {
+                        System.err.println("❌ Error growing plant: " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    private void randomPlantGrowth() {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                Location location = locations[x][y];
+                if (ThreadLocalRandom.current().nextDouble() < 0.03) {
+                    Plant newPlant = ThreadLocalRandom.current().nextDouble() < 0.7 ? new Grass() : new Mushroom();
+                    if (location.canAddOrganism(newPlant)) {
+                        location.addOrganism(newPlant);
+                        newPlant.setLocation(location);
                     }
                 }
             }
