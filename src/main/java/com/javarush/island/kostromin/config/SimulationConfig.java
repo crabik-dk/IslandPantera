@@ -16,8 +16,8 @@ import java.util.Map;
  */
 
 public class SimulationConfig {
-    public final int TICK_DURATION_MS = 100;
-    public final int MAX_TICKS = 2000;
+    public final int TICK_DURATION_MS = 200;
+    public final int MAX_TICKS = 20000;
     public final static int WIDTH = 30;
     public final static int HEIGHT = 30;
 
@@ -30,7 +30,7 @@ public class SimulationConfig {
             Map.entry(Horse.class, 20),
             Map.entry(Deer.class, 20),
             Map.entry(Rabbit.class, 150),
-            Map.entry(Mouse.class, 120),
+            Map.entry(Mouse.class, 100),
             Map.entry(Goat.class, 140),
             Map.entry(Sheep.class, 140),
             Map.entry(Boar.class, 50),
