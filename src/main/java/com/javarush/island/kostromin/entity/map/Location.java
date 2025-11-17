@@ -10,6 +10,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+/**
+ * The class is responsible for the opportunity:
+ * -- add new organisms
+ * -- remove organisms
+ * -- get the nearest coordinates
+ * -- get the heaviest body
+ * */
+
 public class Location {
     private final int x, y;
     private final List<Organism> organisms;
@@ -23,6 +31,7 @@ public class Location {
         this.organisms = new ArrayList<>();
         this.lock = new ReentrantLock();
     }
+
     public boolean addOrganism(Organism organism) {
         lock.lock();
         try {
@@ -77,6 +86,7 @@ public class Location {
 
     public Location getRandomNeighbor() {
         Random random = ThreadLocalRandom.current();
+        //4 directions (bottom, top, left, right)
         int[][] directions = {{-1,0}, {1,0}, {0,-1}, {0,1}};
         int[] dir = directions[random.nextInt(directions.length)];
         int newX = x + dir[0];

@@ -13,7 +13,11 @@ import com.javarush.island.kostromin.statistics.Statistics;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ * This class describes the main activities of organisms:
+ * movement, food, reproduction, growth.
+ * The initial organisms also appear here.
+ * */
 public class Island {
     private final Location[][] locations;
     private final int width, height;
@@ -28,7 +32,7 @@ public class Island {
         this.height = SimulationConfig.HEIGHT;
         this.config = config;
         this.locations = new Location[width][height];
-        this.scheduler = Executors.newScheduledThreadPool(4);
+        this.scheduler = Executors.newScheduledThreadPool(8);
         this.statistics = new Statistics(this);
         initializeLocations();
     }
@@ -42,14 +46,14 @@ public class Island {
     }
 
     public void initialize() {
-        System.out.println("🏝️ Initializing island with animals and plants...");
+        System.out.println(SimulationConstants.INITIALIZING_ISLAND_WITH_ANIMALS_AND_PLANTS);
         config.INITIAL_ANIMAL_COUNTS.forEach((animalClass, count) -> {
             for (int i = 0; i < count; i++) {
                 try {
                     Animal animal = animalClass.getDeclaredConstructor().newInstance();
                     placeOrganismRandomly(animal);
                 } catch (Exception e) {
-                    System.err.println("❌ Error creating animal: " + animalClass.getSimpleName());
+                    System.err.println(SimulationConstants.ERROR_CREATING_ANIMAL + animalClass.getSimpleName());
                 }
             }
         });
@@ -59,20 +63,22 @@ public class Island {
                     Plant plant = plantClass.getDeclaredConstructor().newInstance();
                     placeOrganismRandomly(plant);
                 } catch (Exception e) {
-                    System.err.println("❌ Error creating plant: " + plantClass.getSimpleName());
+                    System.err.println(SimulationConstants.ERROR_CREATING_PLANT + plantClass.getSimpleName());
                 }
             }
         });
-        System.out.println("✅ Island initialization completed");
+
+        System.out.println(SimulationConstants.ISLAND_INITIALIZATION_COMPLETED);
     }
 
     private void placeOrganismRandomly(Organism organism) {
         Random random = ThreadLocalRandom.current();
         int attempts = 0;
-        while (attempts < 100) {
+        while (attempts < SimulationConstants.MAX_ATTEMPTS) {
             int x = random.nextInt(width);
             int y = random.nextInt(height);
             Location location = locations[x][y];
+
             if (location.addOrganism(organism)) {
                 if (organism instanceof Animal animal) {
                     animal.setLocation(location);
@@ -81,12 +87,11 @@ public class Island {
             }
             attempts++;
         }
-        System.err.println("⚠️ Could not place organism after " + SimulationConstants.MAX_ATTEMPTS + " attempts: " + organism.getClass().getSimpleName());
+        System.err.println(SimulationConstants.COULD_NOT_PLACE_ORGANISM_AFTER + SimulationConstants.MAX_ATTEMPTS + SimulationConstants.ATTEMPTS + ": " + organism.getClass().getSimpleName());
     }
-
     public void startSimulation() {
         running = true;
-        System.out.println("▶️ Starting island simulation...");
+        System.out.println(SimulationConstants.STARTING_ISLAND_SIMULATION);
         scheduler.scheduleAtFixedRate(this::processTick, 0, config.TICK_DURATION_MS, TimeUnit.MILLISECONDS);
 //        scheduler.scheduleWithFixedDelay(this::processTick,0,config.TICK_DURATION_MS,TimeUnit.MILLISECONDS);
     }
@@ -106,7 +111,7 @@ public class Island {
             printStatistics();
             checkStopCondition();
         } catch (Exception e) {
-            System.err.println("❌ Error in tick " + tick + ": " + e.getMessage());
+            System.err.println(SimulationConstants.ERROR_IN_TICK + tick + ": " + e.getMessage());
         }
     }
 
@@ -122,7 +127,7 @@ public class Island {
                     try {
                         animal.move();
                     } catch (Exception e) {
-                        System.err.println("❌ Error moving animal: " + e.getMessage());
+                        System.err.println(SimulationConstants.ERROR_MOVING_ANIMAL + e.getMessage());
                     }
                 }
             }
@@ -141,13 +146,12 @@ public class Island {
                     try {
                         animal.eat();
                     } catch (Exception e) {
-                        System.err.println("❌ Error feeding animal: " + e.getMessage());
+                        System.err.println(SimulationConstants.ERROR_FEEDING_ANIMAL+ e.getMessage());
                     }
                 }
             }
         }
     }
-
     private void reproduceAllAnimals() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -161,19 +165,18 @@ public class Island {
                     animalsByType.computeIfAbsent(animal.getClass(), k -> new ArrayList<>()).add(animal);
                 }
                 for (List<Animal> animalGroup : animalsByType.values()) {
-                    if (animalGroup.size() >= 2) {
+                    if (animalGroup.size() >= SimulationConstants.MIN_GROUP_SIZE) {
                         Animal representative = animalGroup.get(ThreadLocalRandom.current().nextInt(animalGroup.size()));
                         try {
                             representative.reproduce();
                         } catch (Exception e) {
-                            System.err.println("❌ Error reproducing animals: " + e.getMessage());
+                            System.err.println(SimulationConstants.ERROR_REPRODUCING_ANIMALS + e.getMessage());
                         }
                     }
                 }
             }
         }
     }
-
     private void growAllPlants() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -187,19 +190,18 @@ public class Island {
                         plant.grow();
                         plant.reproduce();
                     } catch (Exception e) {
-                        System.err.println("❌ Error growing plant: " + e.getMessage());
+                        System.err.println(SimulationConstants.ERROR_GROWING_PLANT + e.getMessage());
                     }
                 }
             }
         }
     }
-
     private void randomPlantGrowth() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 Location location = locations[x][y];
-                if (ThreadLocalRandom.current().nextDouble() < 0.03) {
-                    Plant newPlant = ThreadLocalRandom.current().nextDouble() < 0.7 ? new Grass() : new Mushroom();
+                if (ThreadLocalRandom.current().nextDouble() < SimulationConstants.RANDOM_PLANT_GROWTH_PROBABILITY) {
+                    Plant newPlant = ThreadLocalRandom.current().nextDouble() < SimulationConstants.GRASS_SPAWN_PROBABILITY ? new Grass() : new Mushroom();
                     if (location.canAddOrganism(newPlant)) {
                         location.addOrganism(newPlant);
                         newPlant.setLocation(location);
@@ -208,6 +210,7 @@ public class Island {
             }
         }
     }
+
     private void spawnAnimalsAtBorder() {
         int totalSpawned = 0;
         for (BorderSpawnConfig spawnConfig : BorderSpawnConfig.values()) {
@@ -215,13 +218,13 @@ public class Island {
                 boolean spawned = trySpawnAnimalAtBorder(spawnConfig.getAnimalClass());
                 if (spawned) {
                     totalSpawned++;
-                    System.out.println(spawnConfig.getEmoji() + " Spawned new " +
-                            spawnConfig.getAnimalClass().getSimpleName() + " at border");
+                    System.out.println(spawnConfig.getEmoji() + SimulationConstants.SPAWNED_NEW +
+                            spawnConfig.getAnimalClass().getSimpleName() + SimulationConstants.AT_BORDER);
                 }
             }
         }
         if (totalSpawned > 0) {
-            System.out.println("📍 Total animals spawned at border: " + totalSpawned);
+            System.out.println(SimulationConstants.TOTAL_ANIMALS_SPAWNED_AT_BORDER + totalSpawned);
         }
     }
 
@@ -240,17 +243,17 @@ public class Island {
                     return true;
                 }
             }
-            System.out.println("⚠️ Failed to spawn " + animalClass.getSimpleName() + " at border after " +
-                    SimulationConstants.MAX_BORDER_SPAWN_ATTEMPTS + " attempts");
+            System.out.println(SimulationConstants.FAILED_TO_SPAWN + animalClass.getSimpleName() + " at border after " +
+                    SimulationConstants.MAX_BORDER_SPAWN_ATTEMPTS + SimulationConstants.ATTEMPTS);
             return false;
         } catch (Exception e) {
-            System.err.println("❌ Error creating animal instance for border spawn: " +
+            System.err.println(SimulationConstants.ERROR_CREATING_ANIMAL_INSTANCE_FOR_BORDER_SPAWN +
                     animalClass.getSimpleName() + " - " + e.getMessage());
             return false;
         }
     }
     private Location getRandomBorderLocation() {
-        int side = ThreadLocalRandom.current().nextInt(4);
+        int side = ThreadLocalRandom.current().nextInt(SimulationConstants.BORDERS_COUNT);
         int x, y;
         switch (side) {
             case 0: // top border y = 0
@@ -274,14 +277,13 @@ public class Island {
         }
         return getLocation(x, y);
     }
-
     private void printStatistics() {
         statistics.printStatistics(currentTick.get());
     }
 
     private void checkStopCondition() {
         if (currentTick.get() >= config.MAX_TICKS) {
-            System.out.println("⏹️ Simulation stopped: reached maximum ticks (" + config.MAX_TICKS + ")");
+            System.out.println(SimulationConstants.SIMULATION_STOPPED_REACHED_MAXIMUM_TICKS + config.MAX_TICKS);
             stopSimulation();
             return;
         }
@@ -298,8 +300,9 @@ public class Island {
             }
             if (hasAnimals) break;
         }
+
         if (!hasAnimals) {
-            System.out.println("⏹️ Simulation stopped: no animals left");
+            System.out.println(SimulationConstants.SIMULATION_STOPPED_NO_ANIMALS_LEFT);
             stopSimulation();
         }
     }
@@ -315,7 +318,7 @@ public class Island {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        System.out.println("✅ Simulation finished.");
+        System.out.println(SimulationConstants.SIMULATION_FINISHED);
     }
 
     public Location getLocation(int x, int y) {
@@ -327,10 +330,6 @@ public class Island {
 
     public Location[][] getLocations() {
         return locations;
-    }
-
-    public boolean isRunning() {
-        return running;
     }
 
     public int getWidth() {

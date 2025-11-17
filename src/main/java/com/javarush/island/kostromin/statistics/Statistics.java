@@ -1,13 +1,11 @@
 package com.javarush.island.kostromin.statistics;
 
+import com.javarush.island.kostromin.constants.SimulationConstants;
 import com.javarush.island.kostromin.entity.map.Island;
 import com.javarush.island.kostromin.entity.map.Location;
 import com.javarush.island.kostromin.entity.organisms.Organism;
-import com.javarush.island.kostromin.entity.organisms.animal.herbivore.Caterpillar;
-import com.javarush.island.kostromin.entity.organisms.animal.herbivore.Duck;
-import com.javarush.island.kostromin.entity.organisms.animal.herbivore.Mouse;
-import com.javarush.island.kostromin.entity.organisms.animal.predator.Boa;
-import com.javarush.island.kostromin.entity.organisms.animal.predator.Wolf;
+import com.javarush.island.kostromin.entity.organisms.animal.herbivore.*;
+import com.javarush.island.kostromin.entity.organisms.animal.predator.*;
 import com.javarush.island.kostromin.entity.organisms.plant.Grass;
 import com.javarush.island.kostromin.entity.organisms.plant.Mushroom;
 
@@ -30,13 +28,14 @@ public class Statistics {
         Location[][] locations = island.getLocations();
         int width = island.getWidth();
         int height = island.getHeight();
-        System.out.println("Island Map (showing heaviest organism in each cell):");
-        System.out.println("Legend: 🐺=Wolf 🐍=Boa 🐁=Mouse 🦆=Duck 🐛=Caterpillar 🌿=Grass 🍄=Mushroom ⚪=Empty");
-        String emptyEmoji = "⚪";
+        System.out.println(SimulationConstants.ISLAND_MAP_SHOWING_HEAVIEST_ORGANISM_IN_EACH_CELL);
+        System.out.println(SimulationConstants.ANIMALS_LEGEND);
+        String emptyEmoji = "❌";
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 Location location = locations[x][y];
                 Organism heaviest = location.getHeaviestOrganism();
+
                 if (heaviest != null) {
                     System.out.print("|" + heaviest.getEmoji());
                 } else {
@@ -64,9 +63,8 @@ public class Statistics {
                 }
             }
         }
-
-        System.out.println("\n📊 Detailed Statistics:");
-        System.out.println("====================");
+        System.out.println(SimulationConstants.DETAILED_STATISTICS);
+        System.out.println("=".repeat(60));
         counts.entrySet().stream()
                 .filter(entry -> entry.getValue().get() > 0)
                 .sorted((a, b) -> Integer.compare(b.getValue().get(), a.getValue().get()))
@@ -77,15 +75,18 @@ public class Statistics {
                     double avgWeight = totalWeight / count;
                     String emoji = getEmojiForClass(orgClass);
                     String name = orgClass.getSimpleName();
-                    System.out.printf("%s %s: Count=%d, Avg Weight=%.3f, Total Weight=%.3f%n",
+                    System.out.printf("%s %s Count=%d, Avg Weight=%.3f, Total Weight=%.3f%n",
                             emoji, name, count, avgWeight, totalWeight);
                 });
     }
+
     private void initializeStatMaps(
             Map<Class<? extends Organism>, AtomicInteger> counts,
             Map<Class<? extends Organism>, Double> totalWeights) {
         Class<?>[] organismClasses = {
-                Wolf.class, Boa.class, Mouse.class, Duck.class, Caterpillar.class,
+                Wolf.class, Boa.class, Fox.class, Bear.class, Eagle.class,
+                Horse.class, Deer.class, Rabbit.class, Mouse.class, Goat.class,
+                Sheep.class, Boar.class, Buffalo.class, Duck.class, Caterpillar.class,
                 Grass.class, Mushroom.class
         };
         for (Class<?> orgClass : organismClasses) {

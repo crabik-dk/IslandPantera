@@ -1,17 +1,15 @@
 package com.javarush.island.kostromin.entity.organisms.animal;
 
 import com.javarush.island.kostromin.config.FoodProbabilityConfig;
+import com.javarush.island.kostromin.constants.SimulationConstants;
 import com.javarush.island.kostromin.entity.map.Location;
 import com.javarush.island.kostromin.entity.organisms.Organism;
-import com.javarush.island.kostromin.services.Eatable;
-import com.javarush.island.kostromin.services.Movable;
-import com.javarush.island.kostromin.services.Reproducible;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 
-public abstract class Animal extends Organism implements Movable, Eatable, Reproducible {
+public abstract class Animal extends Organism {
     protected final double foodNeeded;
     protected final int maxSpeed;
     protected Location currentLocation;
@@ -34,10 +32,10 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
         return FoodProbabilityConfig.getEatingProbability(this.getClass(), targetClass);
     }
     protected void loseWeight() {
-        if (!isAlive) {
+        if (!isAlive){
             return;
         }
-        weight -= maxWeight * 0.1;
+        weight -= maxWeight * SimulationConstants.WEIGHT_LOSS_RATE;
         checkWeight();
     }
 
@@ -49,15 +47,15 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
                 .filter(org -> org.getClass() == this.getClass() && org.isAlive())
                 .map(org -> (Animal) org)
                 .toList();
-        if (sameTypeAnimals.size() >= 2) {
-            if (ThreadLocalRandom.current().nextDouble() < 0.5) {
+        if (sameTypeAnimals.size() >= SimulationConstants.MIN_GROUP_SIZE) {
+            if (ThreadLocalRandom.current().nextDouble() < SimulationConstants.REPRODUCTION_PROBABILITY) {
                 int currentCount = sameTypeAnimals.size();
-                int newCount = (int) (currentCount * 1.5);
+                int newCount = (int) (currentCount * SimulationConstants.ANIMAL_RATIO_AFTER_REPRODUCTION);
                 if (newCount <= maxPerLocation) {
                     int animalsToAdd = newCount - currentCount;
                     for (int i = 0; i < animalsToAdd; i++) {
                         Animal offspring = (Animal) createOffspring();
-                        offspring.weight = this.weight * 0.7;
+                        offspring.weight = this.weight * SimulationConstants.OFFSPRING_WEIGHT_FACTOR;
                         offspring.checkWeight();
                         if (offspring.isAlive() && currentLocation.canAddOrganism(offspring)) {
                             currentLocation.addOrganism(offspring);
@@ -65,14 +63,14 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
                         }
                     }
                     for (Animal animal : sameTypeAnimals) {
-                        animal.weight *= 0.7;
+                        animal.weight *= SimulationConstants.OFFSPRING_WEIGHT_FACTOR;
                         animal.checkWeight();
                     }
                 }
             }
         }
     }
-    @Override
+
     public void move() {
         if (!isAlive || currentLocation == null) {
             return;
@@ -89,7 +87,6 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
         }
     }
 
-    @Override
     public void eat() {
         if (!isAlive || currentLocation == null) {
             return;
@@ -101,7 +98,6 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
         for (Organism food : potentialFood) {
             double probability = getEatingProbability(food.getClass());
             if (ThreadLocalRandom.current().nextDouble() < probability) {
-                // Успешно съедаем пищу
                 currentLocation.removeOrganism(food);
                 weight = Math.min(maxWeight, weight + food.getWeight());
                 hasEaten = true;
@@ -109,7 +105,6 @@ public abstract class Animal extends Organism implements Movable, Eatable, Repro
                 break;
             }
         }
-
         if (!hasEaten) {
             loseWeight();
         }

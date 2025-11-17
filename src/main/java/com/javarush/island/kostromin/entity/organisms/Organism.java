@@ -1,5 +1,7 @@
 package com.javarush.island.kostromin.entity.organisms;
 
+import com.javarush.island.kostromin.constants.SimulationConstants;
+
 public abstract class Organism {
     protected double weight;
     protected final double maxWeight;
@@ -30,7 +32,7 @@ public abstract class Organism {
     public abstract String getEmoji();
 
     protected void checkWeight() {
-        if (isAlive && weight < maxWeight * 0.15) {
+        if (isAlive && weight < maxWeight * SimulationConstants.MIN_WEIGHT_FACTOR) {
             die();
         }
     }
