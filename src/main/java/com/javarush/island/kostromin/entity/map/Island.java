@@ -93,7 +93,7 @@ public class Island {
         running = true;
         System.out.println(SimulationConstants.STARTING_ISLAND_SIMULATION);
         scheduler.scheduleAtFixedRate(this::processTick, 0, config.TICK_DURATION_MS, TimeUnit.MILLISECONDS);
-//        scheduler.scheduleWithFixedDelay(this::processTick,0,config.TICK_DURATION_MS,TimeUnit.MILLISECONDS);
+//        scheduler.scheduleWithFixedDelay(this::processTick,0,config.TICK_DURATION_MS,TimeUnit.MILLISECONDS); //
     }
     private void processTick() {
         if (!running) {

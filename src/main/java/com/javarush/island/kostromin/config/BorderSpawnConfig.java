@@ -7,6 +7,7 @@ import com.javarush.island.kostromin.entity.organisms.animal.predator.*;
 /**
  * This enum describes the probability of new animals
  * appearing at the edge of the map.
+ * This is a simulation of the fact that animals very rarely come from outside.
  * */
 public enum BorderSpawnConfig {
     //Predators:
