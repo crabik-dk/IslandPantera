@@ -9,7 +9,9 @@ import com.javarush.island.kostromin.entity.organisms.animal.predator.Boa;
 import com.javarush.island.kostromin.entity.organisms.animal.predator.Wolf;
 import com.javarush.island.kostromin.entity.organisms.plant.Grass;
 import com.javarush.island.kostromin.entity.organisms.plant.Mushroom;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,12 +23,69 @@ import java.util.concurrent.ConcurrentHashMap;
  * Uses static initialization to load automatically when the application starts.
  */
 public class FoodProbabilityConfig {
+    public static final String CONFIG_FILE = "kostromin/food_probabilities.yaml";
     private static final Map<Class<? extends Animal>, Map<Class<? extends Organism>, Double>> FOOD_PROBABILITIES = new ConcurrentHashMap<>();
+    private static final Map<String, Class<? extends Organism>> CLASS_MAPPING = new ConcurrentHashMap<>();
 
     static {
-        loadDefaultProbabilities();
+        initializeClassMapping();
+        loadProbabilitiesFromYaml();
     }
 
+    private static void initializeClassMapping() {
+        CLASS_MAPPING.put("Wolf", Wolf.class);
+        CLASS_MAPPING.put("Boa", Boa.class);
+        CLASS_MAPPING.put("Mouse", Mouse.class);
+        CLASS_MAPPING.put("Duck", Duck.class);
+        CLASS_MAPPING.put("Caterpillar", Caterpillar.class);
+        CLASS_MAPPING.put("Grass", Grass.class);
+        CLASS_MAPPING.put("Mushroom", Mushroom.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void loadProbabilitiesFromYaml() {
+        try {
+            Yaml yaml = new Yaml();
+            InputStream inputStream = FoodProbabilityConfig.class
+                    .getClassLoader()
+                    .getResourceAsStream(CONFIG_FILE);
+            if (inputStream == null) {
+                System.err.println("❌ YAML config file not found: " + CONFIG_FILE + ", using default probabilities");
+                loadDefaultProbabilities();
+                return;
+            }
+            Map<String, Object> data = yaml.load(inputStream);
+            Map<String, Map<String, Integer>> foodMap = (Map<String, Map<String, Integer>>) data.get("foodMap");
+            if (foodMap == null) {
+                System.err.println("❌ No 'foodMap' found in YAML, using default probabilities");
+                loadDefaultProbabilities();
+                return;
+            }
+            for (Map.Entry<String, Map<String, Integer>> predatorEntry : foodMap.entrySet()) {
+                String predatorName = predatorEntry.getKey();
+                Class<? extends Organism> predatorClass = CLASS_MAPPING.get(predatorName);
+                if (predatorClass == null || !Animal.class.isAssignableFrom(predatorClass)) {
+                    continue;
+                }
+                Map<Class<? extends Organism>, Double> preyMap = new HashMap<>();
+                Map<String, Integer> preyProbabilities = predatorEntry.getValue();
+                for (Map.Entry<String, Integer> preyEntry : preyProbabilities.entrySet()) {
+                    String preyName = preyEntry.getKey();
+                    Class<? extends Organism> preyClass = CLASS_MAPPING.get(preyName);
+                    if (preyClass != null) {
+                        double probability = preyEntry.getValue() / 100.0;
+                        preyMap.put(preyClass, probability);
+                    }
+                }
+                FOOD_PROBABILITIES.put((Class<? extends Animal>) predatorClass, preyMap);
+            }
+            inputStream.close();
+            System.out.println("✅ Food probabilities loaded successfully from " + CONFIG_FILE);
+        } catch (Exception e) {
+            System.err.println("❌ Error loading YAML config: " + e.getMessage());
+            loadDefaultProbabilities();
+        }
+    }
 
     private static void loadDefaultProbabilities() {
         Map<Class<? extends Organism>, Double> wolfMap = new HashMap<>();

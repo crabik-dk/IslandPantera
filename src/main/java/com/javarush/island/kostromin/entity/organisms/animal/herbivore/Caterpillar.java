@@ -1,5 +1,6 @@
 package com.javarush.island.kostromin.entity.organisms.animal.herbivore;
 
+import com.javarush.island.kostromin.constants.SimulationConstants;
 import com.javarush.island.kostromin.entity.map.Location;
 import com.javarush.island.kostromin.entity.organisms.Organism;
 
@@ -26,7 +27,7 @@ public class Caterpillar extends Herbivore {
         if (!isAlive || currentLocation == null) {
             return;
         }
-        if (ThreadLocalRandom.current().nextDouble() < 0.05) {
+        if (ThreadLocalRandom.current().nextDouble() < SimulationConstants.CATERPILLAR_MOVE_PROBABILITY) {
             Location newLocation = currentLocation.getRandomNeighbor();
             if (newLocation != null && newLocation.canAddOrganism(this)) {
                 currentLocation.removeOrganism(this);
@@ -35,10 +36,9 @@ public class Caterpillar extends Herbivore {
             }
         }
     }
-
     @Override
     public void eat() {
-        if (!isAlive || currentLocation == null) {
+        if (!isAlive || currentLocation == null){
             return;
         }
         List<Organism> potentialFood = currentLocation.getOrganisms().stream()
@@ -57,12 +57,15 @@ public class Caterpillar extends Herbivore {
         }
         if (!hasEaten) {
             ticksWithoutFood++;
-            if (ticksWithoutFood >= 10) {
+            if (ticksWithoutFood >= SimulationConstants.CATERPILLAR_STARVATION_TICKS) {
                 die();
                 if (currentLocation != null) {
                     currentLocation.removeOrganism(this);
                 }
             }
         }
+    }
+    public int getTicksWithoutFood() {
+        return ticksWithoutFood;
     }
 }

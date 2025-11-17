@@ -1,6 +1,8 @@
 package com.javarush.island.kostromin.entity.map;
 
+import com.javarush.island.kostromin.config.BorderSpawnConfig;
 import com.javarush.island.kostromin.config.SimulationConfig;
+import com.javarush.island.kostromin.constants.SimulationConstants;
 import com.javarush.island.kostromin.entity.organisms.Organism;
 import com.javarush.island.kostromin.entity.organisms.animal.Animal;
 import com.javarush.island.kostromin.entity.organisms.plant.Grass;
@@ -51,7 +53,6 @@ public class Island {
                 }
             }
         });
-
         config.INITIAL_PLANT_COUNTS.forEach((plantClass, count) -> {
             for (int i = 0; i < count; i++) {
                 try {
@@ -80,6 +81,7 @@ public class Island {
             }
             attempts++;
         }
+        System.err.println("⚠️ Could not place organism after " + SimulationConstants.MAX_ATTEMPTS + " attempts: " + organism.getClass().getSimpleName());
     }
 
     public void startSimulation() {
@@ -89,7 +91,9 @@ public class Island {
 //        scheduler.scheduleWithFixedDelay(this::processTick,0,config.TICK_DURATION_MS,TimeUnit.MILLISECONDS);
     }
     private void processTick() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
         int tick = currentTick.incrementAndGet();
         System.out.println("\n=== Tick " + tick + " ===");
         try {
@@ -98,6 +102,7 @@ public class Island {
             reproduceAllAnimals();
             growAllPlants();
             randomPlantGrowth();
+            spawnAnimalsAtBorder();
             printStatistics();
             checkStopCondition();
         } catch (Exception e) {
@@ -132,7 +137,6 @@ public class Island {
                         .filter(org -> org instanceof Animal && org.isAlive())
                         .map(org -> (Animal) org)
                         .toList();
-
                 for (Animal animal : animals) {
                     try {
                         animal.eat();
@@ -203,6 +207,72 @@ public class Island {
                 }
             }
         }
+    }
+    private void spawnAnimalsAtBorder() {
+        int totalSpawned = 0;
+        for (BorderSpawnConfig spawnConfig : BorderSpawnConfig.values()) {
+            if (ThreadLocalRandom.current().nextDouble() < spawnConfig.getSpawnProbability()) {
+                boolean spawned = trySpawnAnimalAtBorder(spawnConfig.getAnimalClass());
+                if (spawned) {
+                    totalSpawned++;
+                    System.out.println(spawnConfig.getEmoji() + " Spawned new " +
+                            spawnConfig.getAnimalClass().getSimpleName() + " at border");
+                }
+            }
+        }
+        if (totalSpawned > 0) {
+            System.out.println("📍 Total animals spawned at border: " + totalSpawned);
+        }
+    }
+
+    /**
+     * Tries to place an animal of the specified type at the edge of the map
+     * return true if the animal has been successfully placed, false otherwise
+     */
+    private boolean trySpawnAnimalAtBorder(Class<? extends Animal> animalClass) {
+        try {
+            Animal animal = animalClass.getDeclaredConstructor().newInstance();
+            for (int attempt = 0; attempt < SimulationConstants.MAX_BORDER_SPAWN_ATTEMPTS; attempt++) {
+                Location borderLocation = getRandomBorderLocation();
+                if (borderLocation != null && borderLocation.canAddOrganism(animal)) {
+                    borderLocation.addOrganism(animal);
+                    animal.setLocation(borderLocation);
+                    return true;
+                }
+            }
+            System.out.println("⚠️ Failed to spawn " + animalClass.getSimpleName() + " at border after " +
+                    SimulationConstants.MAX_BORDER_SPAWN_ATTEMPTS + " attempts");
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ Error creating animal instance for border spawn: " +
+                    animalClass.getSimpleName() + " - " + e.getMessage());
+            return false;
+        }
+    }
+    private Location getRandomBorderLocation() {
+        int side = ThreadLocalRandom.current().nextInt(4);
+        int x, y;
+        switch (side) {
+            case 0: // top border y = 0
+                x = ThreadLocalRandom.current().nextInt(width);
+                y = 0;
+                break;
+            case 1: // low border
+                x = ThreadLocalRandom.current().nextInt(width);
+                y = height - 1;
+                break;
+            case 2: // left border
+                x = 0;
+                y = ThreadLocalRandom.current().nextInt(height);
+                break;
+            case 3: // right border
+                x = width - 1;
+                y = ThreadLocalRandom.current().nextInt(height);
+                break;
+            default:
+                return null;
+        }
+        return getLocation(x, y);
     }
 
     private void printStatistics() {

@@ -1,0 +1,18 @@
+foodMap:
+  Wolf:
+    Mouse: 80
+    Duck: 40
+  Boa:
+    Mouse: 40
+    Duck: 10
+  Mouse:
+    Caterpillar: 90
+    Grass: 70
+    Mushroom: 100
+  Duck:
+    Caterpillar: 90
+    Grass: 100
+    Mushroom: 50
+  Caterpillar:
+    Grass: 100
+    Mushroom: 80
